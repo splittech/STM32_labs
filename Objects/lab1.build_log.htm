@@ -27,115 +27,171 @@ Project File Date:  09/30/2024
 <h2>Output:</h2>
 *** Using Compiler 'V6.18', folder: 'C:\Keil_v5\ARM\ARMCLANG\Bin'
 Build target 'Target 1'
-main.c(3): warning: // comments are not allowed in this language [-Wcomment]
-// <CD><EE><EC><E5><F0> <EF><E8><ED><E0> <F1><E2><E5><F2><EE><E4><E8><EE><E4><E0>
-^
 main.c(4): warning: no previous extern declaration for non-static variable 'LED_pin' [-Wmissing-variable-declarations]
-uint32_t LED_pin = 13;
+uint32_t LED_pin = 5;                                           // <CD><EE><EC><E5><F0> <EF><E8><ED><E0> <E4><EB><FF> <F1><E2><E5><F2><EE><E4><E8><EE><E4><E0>
          ^
 main.c(4): note: declare 'static' if the variable is not intended to be used outside of this translation unit
-uint32_t LED_pin = 13;
+uint32_t LED_pin = 5;                                           // <CD><EE><EC><E5><F0> <EF><E8><ED><E0> <E4><EB><FF> <F1><E2><E5><F2><EE><E4><E8><EE><E4><E0>
 ^
-main.c(20): warning: no previous prototype for function 'SystemCoreClockConfigure' [-Wmissing-prototypes]
+main.c(4): warning: // comments are not allowed in this language [-Wcomment]
+uint32_t LED_pin = 5;                                           // <CD><EE><EC><E5><F0> <EF><E8><ED><E0> <E4><EB><FF> <F1><E2><E5><F2><EE><E4><E8><EE><E4><E0>
+                                                                ^
+main.c(5): warning: no previous extern declaration for non-static variable 'BUTTON_1_pin' [-Wmissing-variable-declarations]
+uint32_t BUTTON_1_pin = 6;                              // <CD><EE><EC><E5><F0> <EF><E8><ED><E0> <E4><EB><FF> <EA><ED><EE><EF><EA><E8>
+         ^
+main.c(5): note: declare 'static' if the variable is not intended to be used outside of this translation unit
+uint32_t BUTTON_1_pin = 6;                              // <CD><EE><EC><E5><F0> <EF><E8><ED><E0> <E4><EB><FF> <EA><ED><EE><EF><EA><E8>
+^
+main.c(6): warning: no previous extern declaration for non-static variable 'debounce_limit' [-Wmissing-variable-declarations]
+uint32_t debounce_limit = 10000;        // <CB><E8><EC><E8><F2> <F1><F7><E5><F2><F7><E8><EA><E0> <E4><EB><FF> <E4><F0><E5><E1><E5><E7><E3><E0> <EA><ED><EE><EF><EA><E8>
+         ^
+main.c(6): note: declare 'static' if the variable is not intended to be used outside of this translation unit
+uint32_t debounce_limit = 10000;        // <CB><E8><EC><E8><F2> <F1><F7><E5><F2><F7><E8><EA><E0> <E4><EB><FF> <E4><F0><E5><E1><E5><E7><E3><E0> <EA><ED><EE><EF><EA><E8>
+^
+main.c(27): warning: no previous prototype for function 'SystemCoreClockConfigure' [-Wmissing-prototypes]
 void SystemCoreClockConfigure(void) {
      ^
-main.c(20): note: declare 'static' if the function is not intended to be used outside of this translation unit
+main.c(27): note: declare 'static' if the function is not intended to be used outside of this translation unit
 void SystemCoreClockConfigure(void) {
 ^
 static 
-main.c(68): warning: implicit conversion loses integer precision: 'unsigned int' to 'uint16_t' (aka 'unsigned short') [-Wimplicit-int-conversion]
-                TIM3->PSC = (SystemCoreClock) / 1000 - 1;
-                          ~ ~~~~~~~~~~~~~~~~~~~~~~~~~^~~
-main.c(60): warning: no previous prototype for function 'TIM3_Init' [-Wmissing-prototypes]
+main.c(60): warning: implicit conversion loses integer precision: 'unsigned int' to 'uint16_t' (aka 'unsigned short') [-Wimplicit-int-conversion]
+        TIM3->PSC = (SystemCoreClock) / 1000 - 1;
+                  ~ ~~~~~~~~~~~~~~~~~~~~~~~~~^~~
+main.c(52): warning: no previous prototype for function 'TIM3_Init' [-Wmissing-prototypes]
 void TIM3_Init () {
      ^
-main.c(60): note: declare 'static' if the function is not intended to be used outside of this translation unit
+main.c(52): note: declare 'static' if the function is not intended to be used outside of this translation unit
 void TIM3_Init () {
 ^
 static 
-main.c(60): warning: this old-style function definition is not preceded by a prototype [-Wstrict-prototypes]
+main.c(52): warning: this old-style function definition is not preceded by a prototype [-Wstrict-prototypes]
 void TIM3_Init () {
                ^
-main.c(89): warning: implicit conversion loses integer precision: 'unsigned int' to 'uint16_t' (aka 'unsigned short') [-Wimplicit-int-conversion]
-                TIM4->PSC = (SystemCoreClock / 2) / 1000 - 1;
-                          ~ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~
-main.c(81): warning: no previous prototype for function 'TIM4_Init' [-Wmissing-prototypes]
+main.c(81): warning: implicit conversion loses integer precision: 'unsigned int' to 'uint16_t' (aka 'unsigned short') [-Wimplicit-int-conversion]
+        TIM4->PSC = (SystemCoreClock / 2) / 1000 - 1;
+                  ~ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~
+main.c(73): warning: no previous prototype for function 'TIM4_Init' [-Wmissing-prototypes]
 void TIM4_Init () {
      ^
-main.c(81): note: declare 'static' if the function is not intended to be used outside of this translation unit
+main.c(73): note: declare 'static' if the function is not intended to be used outside of this translation unit
 void TIM4_Init () {
 ^
 static 
-main.c(81): warning: this old-style function definition is not preceded by a prototype [-Wstrict-prototypes]
+main.c(73): warning: this old-style function definition is not preceded by a prototype [-Wstrict-prototypes]
 void TIM4_Init () {
                ^
-main.c(101): warning: no previous prototype for function 'enable_pin' [-Wmissing-prototypes]
-void enable_pin(uint32_t pin_number){
+main.c(94): warning: no previous prototype for function 'enable_pin_input' [-Wmissing-prototypes]
+void enable_pin_input(uint32_t pin_number){
      ^
-main.c(101): note: declare 'static' if the function is not intended to be used outside of this translation unit
-void enable_pin(uint32_t pin_number){
+main.c(94): note: declare 'static' if the function is not intended to be used outside of this translation unit
+void enable_pin_input(uint32_t pin_number){
 ^
 static 
-main.c(116): warning: no previous prototype for function 'GPIO_Init' [-Wmissing-prototypes]
+main.c(119): warning: no previous prototype for function 'enable_pin_output' [-Wmissing-prototypes]
+void enable_pin_output(uint32_t pin_number){
+     ^
+main.c(119): note: declare 'static' if the function is not intended to be used outside of this translation unit
+void enable_pin_output(uint32_t pin_number){
+^
+static 
+main.c(140): warning: no previous prototype for function 'GPIO_Init' [-Wmissing-prototypes]
 void GPIO_Init (void) {
      ^
-main.c(116): note: declare 'static' if the function is not intended to be used outside of this translation unit
+main.c(140): note: declare 'static' if the function is not intended to be used outside of this translation unit
 void GPIO_Init (void) {
 ^
 static 
-main.c(125): warning: no previous prototype for function 'switch_pin' [-Wmissing-prototypes]
-void switch_pin (uint32_t pin_number) {
+main.c(154): warning: no previous prototype for function 'Switch_pin' [-Wmissing-prototypes]
+void Switch_pin (uint32_t pin_number) {
      ^
-main.c(125): note: declare 'static' if the function is not intended to be used outside of this translation unit
-void switch_pin (uint32_t pin_number) {
+main.c(154): note: declare 'static' if the function is not intended to be used outside of this translation unit
+void Switch_pin (uint32_t pin_number) {
 ^
 static 
-main.c(137): warning: no previous prototype for function 'TIM3_IRQHandler' [-Wmissing-prototypes]
+main.c(167): warning: no previous prototype for function 'TIM3_IRQHandler' [-Wmissing-prototypes]
 void TIM3_IRQHandler () {
      ^
-main.c(137): note: declare 'static' if the function is not intended to be used outside of this translation unit
+main.c(167): note: declare 'static' if the function is not intended to be used outside of this translation unit
 void TIM3_IRQHandler () {
 ^
 static 
-main.c(137): warning: this old-style function definition is not preceded by a prototype [-Wstrict-prototypes]
+main.c(167): warning: this old-style function definition is not preceded by a prototype [-Wstrict-prototypes]
 void TIM3_IRQHandler () {
                      ^
-main.c(162): warning: no previous prototype for function 'TIM4_IRQHandler' [-Wmissing-prototypes]
+main.c(191): warning: no previous prototype for function 'TIM4_IRQHandler' [-Wmissing-prototypes]
 void TIM4_IRQHandler () {
      ^
-main.c(162): note: declare 'static' if the function is not intended to be used outside of this translation unit
+main.c(191): note: declare 'static' if the function is not intended to be used outside of this translation unit
 void TIM4_IRQHandler () {
 ^
 static 
-main.c(162): warning: this old-style function definition is not preceded by a prototype [-Wstrict-prototypes]
+main.c(191): warning: this old-style function definition is not preceded by a prototype [-Wstrict-prototypes]
 void TIM4_IRQHandler () {
                      ^
-main.c(193): warning: no newline at end of file [-Wnewline-eof]
+main.c(204): warning: declaration shadows a variable in the global scope [-Wshadow]
+uint8_t Debounce_handler(uint8_t button_state){
+                                 ^
+main.c(22): note: previous declaration is here
+uint8_t button_state;    // <D1><EE><F1><F2><EE><FF><ED><E8><E5> <EA><ED><EE><EF><EA><E8> (<E1><E8><F2> <F1><EE><EE><F2><E2><E5><F2><F1><F2><E2><F3><FE><F9><E5><E3><EE> <EF><E8><ED><E0>)
+        ^
+main.c(204): warning: no previous prototype for function 'Debounce_handler' [-Wmissing-prototypes]
+uint8_t Debounce_handler(uint8_t button_state){
+        ^
+main.c(204): note: declare 'static' if the function is not intended to be used outside of this translation unit
+uint8_t Debounce_handler(uint8_t button_state){
+^
+static 
+main.c(242): warning: implicit conversion loses integer precision: 'unsigned int' to 'uint8_t' (aka 'unsigned char') [-Wimplicit-int-conversion]
+                button_state = READ_BIT(GPIOA->IDR, 1 << BUTTON_1_pin);
+                             ~ ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C:/Users/snego/AppData/Local/Arm/Packs/Keil/STM32F1xx_DFP/2.4.1/Device/Include\stm32f10x.h(8358): note: expanded from macro 'READ_BIT'
+#define READ_BIT(REG, BIT)    ((REG) & (BIT))
+                               ~~~~~~^~~~~~~
+main.c(255): warning: no newline at end of file [-Wnewline-eof]
 }
  ^
-main.c(12): warning: no previous extern declaration for non-static variable 'current_time' [-Wmissing-variable-declarations]
+main.c(15): warning: no previous extern declaration for non-static variable 'current_time' [-Wmissing-variable-declarations]
 struct time current_time; // <D2><E5><EA><F3><F9><E5><E5> <E2><F0><E5><EC><FF>
             ^
-main.c(12): note: declare 'static' if the variable is not intended to be used outside of this translation unit
-struct time current_time; // <D2><E5><EA><F3><F9><E5><E5> <E2><F0><E5><EC><FF>
-^
-main.c(13): warning: no previous extern declaration for non-static variable 'alarm_time' [-Wmissing-variable-declarations]
-struct time alarm_time;         // <C2><F0><E5><EC><FF> <E1><F3><E4><E8><EB><FC><ED><E8><EA><E0>
-            ^
-main.c(13): note: declare 'static' if the variable is not intended to be used outside of this translation unit
-struct time alarm_time;         // <C2><F0><E5><EC><FF> <E1><F3><E4><E8><EB><FC><ED><E8><EA><E0>
-^
-main.c(15): warning: no previous extern declaration for non-static variable 'start_alarm_flag' [-Wmissing-variable-declarations]
-uint32_t start_alarm_flag; // <D7><F2><EE><E1><FB> <EF><EE><ED><FF><F2><FC> <EA><EE><E3><E4><E0> <EF><EE><E4><E0><E2><E0><F2><FC> <F1><E8><E3><ED><E0><EB>
-         ^
 main.c(15): note: declare 'static' if the variable is not intended to be used outside of this translation unit
-uint32_t start_alarm_flag; // <D7><F2><EE><E1><FB> <EF><EE><ED><FF><F2><FC> <EA><EE><E3><E4><E0> <EF><EE><E4><E0><E2><E0><F2><FC> <F1><E8><E3><ED><E0><EB>
+struct time current_time; // <D2><E5><EA><F3><F9><E5><E5> <E2><F0><E5><EC><FF>
 ^
-20 warnings generated.
+main.c(16): warning: no previous extern declaration for non-static variable 'alarm_time' [-Wmissing-variable-declarations]
+struct time alarm_time;         // <C2><F0><E5><EC><FF> <E1><F3><E4><E8><EB><FC><ED><E8><EA><E0>
+            ^
+main.c(16): note: declare 'static' if the variable is not intended to be used outside of this translation unit
+struct time alarm_time;         // <C2><F0><E5><EC><FF> <E1><F3><E4><E8><EB><FC><ED><E8><EA><E0>
+^
+main.c(18): warning: no previous extern declaration for non-static variable 'total_seconds' [-Wmissing-variable-declarations]
+uint32_t total_seconds; // <CA><EE><EB><E8><F7><E5><F1><F2><E2><EE> <EF><EE><F1><F7><E8><F2><E0><ED><ED><FB><F5> <F1><E5><EA><F3><ED><E4> (<E2> <F2><E5><EA><F3><F9><E8><F5> <F1><F3><F2><EA><E0><F5>)
+         ^
+main.c(18): note: declare 'static' if the variable is not intended to be used outside of this translation unit
+uint32_t total_seconds; // <CA><EE><EB><E8><F7><E5><F1><F2><E2><EE> <EF><EE><F1><F7><E8><F2><E0><ED><ED><FB><F5> <F1><E5><EA><F3><ED><E4> (<E2> <F2><E5><EA><F3><F9><E8><F5> <F1><F3><F2><EA><E0><F5>)
+^
+main.c(19): warning: no previous extern declaration for non-static variable 'alarm_flag' [-Wmissing-variable-declarations]
+uint32_t alarm_flag;            // <D4><EB><E0><E3>, <F7><F2><EE><E1><FB> <EF><EE><ED><FF><F2><FC>, <EA><EE><E3><E4><E0> <EF><EE><E4><E0><E2><E0><F2><FC> <F1><E8><E3><ED><E0><EB> <ED><E0> <F1><E2><E5><F2><EE><E4><E8><EE><E4>
+         ^
+main.c(19): note: declare 'static' if the variable is not intended to be used outside of this translation unit
+uint32_t alarm_flag;            // <D4><EB><E0><E3>, <F7><F2><EE><E1><FB> <EF><EE><ED><FF><F2><FC>, <EA><EE><E3><E4><E0> <EF><EE><E4><E0><E2><E0><F2><FC> <F1><E8><E3><ED><E0><EB> <ED><E0> <F1><E2><E5><F2><EE><E4><E8><EE><E4>
+^
+main.c(21): warning: no previous extern declaration for non-static variable 'button_count' [-Wmissing-variable-declarations]
+uint32_t button_count; // <D1><F7><E5><F2><F7><E8><EA> <E4><EB><FF> <EE><E1><F0><E0><E1><EE><F2><EA><E8> <E4><F0><E5><E1><E5><E7><E3><E0> <EA><ED><EE><EF><EA><E8>
+         ^
+main.c(21): note: declare 'static' if the variable is not intended to be used outside of this translation unit
+uint32_t button_count; // <D1><F7><E5><F2><F7><E8><EA> <E4><EB><FF> <EE><E1><F0><E0><E1><EE><F2><EA><E8> <E4><F0><E5><E1><E5><E7><E3><E0> <EA><ED><EE><EF><EA><E8>
+^
+main.c(22): warning: no previous extern declaration for non-static variable 'button_state' [-Wmissing-variable-declarations]
+uint8_t button_state;    // <D1><EE><F1><F2><EE><FF><ED><E8><E5> <EA><ED><EE><EF><EA><E8> (<E1><E8><F2> <F1><EE><EE><F2><E2><E5><F2><F1><F2><E2><F3><FE><F9><E5><E3><EE> <EF><E8><ED><E0>)
+        ^
+main.c(22): note: declare 'static' if the variable is not intended to be used outside of this translation unit
+uint8_t button_state;    // <D1><EE><F1><F2><EE><FF><ED><E8><E5> <EA><ED><EE><EF><EA><E8> (<E1><E8><F2> <F1><EE><EE><F2><E2><E5><F2><F1><F2><E2><F3><FE><F9><E5><E3><EE> <EF><E8><ED><E0>)
+^
+29 warnings generated.
 compiling main.c...
 linking...
-Program Size: Code=2004 RO-data=284 RW-data=8 ZI-data=1664  
-".\Objects\lab1.axf" - 0 Error(s), 20 Warning(s).
+Program Size: Code=2274 RO-data=286 RW-data=16 ZI-data=1672  
+".\Objects\lab1.axf" - 0 Error(s), 29 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -189,11 +245,11 @@ Package Vendor: Keil
       Source file:   Boards/ST/NUCLEO-F103RB/Common/LED_NUCLEO_F103RB.c
 
    * Component: Keil::Device:Startup:1.0.0
-      Source file:   Device/Source/system_stm32f10x.c
       Include file:  RTE_Driver/Config/RTE_Device.h
+      Source file:   Device/Source/system_stm32f10x.c
       Source file:   Device/Source/ARM/STM32F1xx_OPT.s
       Source file:   Device/Source/ARM/startup_stm32f10x_md.s
-Build Time Elapsed:  00:00:01
+Build Time Elapsed:  00:00:00
 </pre>
 </body>
 </html>

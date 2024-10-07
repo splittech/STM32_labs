@@ -1,56 +1,48 @@
 #include "stm32f10x.h"
 
-// Номер пина светодиода
-uint32_t LED_pin = 13;
+/*--------------------------НАСТРОЙКИ ПРОЕКТА---------------------------*/
+uint32_t LED_pin = 5; 						// Номер пина для светодиода
+uint32_t BUTTON_1_pin = 6;				// Номер пина для кнопки
+uint32_t debounce_limit = 10000; 	// Лимит счетчика для дребезга кнопки
+/*----------------------------------------------------------------------*/
 
 // Структура для хранения времени
 struct time{
-		uint32_t hours;
-		uint32_t minutes;
-		uint32_t seconds;
+	uint32_t hours;
+	uint32_t minutes;
+	uint32_t seconds;
 };
 struct time current_time; // Текущее время
 struct time alarm_time; 	// Время будильника
 
-uint32_t start_alarm_flag; // Чтобы понять когда подавать сигнал
+uint32_t total_seconds; // Количество посчитанных секунд (в текущих сутках)
+uint32_t alarm_flag; 		// Флаг, чтобы понять, когда подавать сигнал на светодиод
+
+uint32_t button_count; // Счетчик для обработки дребезга кнопки
+uint8_t button_state;	 // Состояние кнопки (бит соответствующего пина)
 
 /*----------------------------------------------------------------
  * SystemCoreClockConfigure: Функция для настройки частоты
  *----------------------------------------------------------------*/
 void SystemCoreClockConfigure(void) {
-		// Включаем HSI
-		RCC->CR |= ((uint32_t)RCC_CR_HSION);
-		// Ожидаем включения HSI
-		while ((RCC->CR & RCC_CR_HSIRDY) == 0);
+	// Включаем HSE
+	RCC->CR |= ((uint32_t)RCC_CR_HSEON);
+	// Ожидаем включения HSE
+	while ((RCC->CR & RCC_CR_HSERDY) == 0);
 
-		// Устанавилваем HSI в качестве источника такстирования
-		RCC->CFGR = RCC_CFGR_SW_HSI;
-		// Ожидаем завершения
-		while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_HSI);
+	// Устанавилваем HSE в качестве источника такстирования
+	RCC->CFGR = RCC_CFGR_SW_HSE;
+	// Ожидаем завершения
+	while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_HSE);
 
-		// Что тут происходит (видимо настройка тактирования самого процессора и портов)
-		RCC->CFGR |= RCC_CFGR_HPRE_DIV1; // HCLK = SYSCLK
-		RCC->CFGR |= RCC_CFGR_PPRE1_DIV1; // APB1 = HCLK/4
-		RCC->CFGR |= RCC_CFGR_PPRE2_DIV1; // APB2 = HCLK
-
-		// Выключаем PLL чтобы настроить множители
-		RCC->CR &= ~RCC_CR_PLLON;
-
-		// Выбираем источник HSI/2, множитель 
-		// (можно было напрямую выбрать HSI в SW без использования PLL, но я сделал так)
-		RCC->CFGR &= ~(RCC_CFGR_PLLSRC | RCC_CFGR_PLLXTPRE | RCC_CFGR_PLLMULL);
-		RCC->CFGR |= (RCC_CFGR_PLLSRC_HSI_Div2 | RCC_CFGR_PLLMULL2);
-
-		// Обратно включаем PLL
-		RCC->CR |= RCC_CR_PLLON;
-		// Ожидаем включения
-		while((RCC->CR & RCC_CR_PLLRDY) == 0) __NOP();
-		
-		// Устанавливаем PLL в качестве источника 
-		RCC->CFGR &= ~RCC_CFGR_SW;
-		RCC->CFGR |= RCC_CFGR_SW_PLL;
-		// Ожидаем конца запуска
-		while ((RCC->CFGR & RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL);
+	// Настройка тактирования самого процессора и портов
+	RCC->CFGR |= RCC_CFGR_HPRE_DIV1; // HCLK = SYSCLK
+	RCC->CFGR |= RCC_CFGR_PPRE1_DIV1; // APB1 = HCLK/4
+	RCC->CFGR |= RCC_CFGR_PPRE2_DIV4; // APB2 = HCLK
+	
+	// В качестве источника тактирования был выбран HSE без использования множителей.
+	// Такой выбор обусловлен требуемой автономностью устройства (частота ниже - меньше расход энергии)
+	// а также желательной точностью в работе таймеров (HSE без множителей - относительно точный тактовый сигнал)
 }
 
 /*----------------------------------------------------------------
@@ -58,20 +50,20 @@ void SystemCoreClockConfigure(void) {
  * (для отсчета времени)
  *----------------------------------------------------------------*/
 void TIM3_Init () {
-		// Включаем таймер
-		RCC -> APB1ENR |= RCC_APB1ENR_TIM3EN;
-		// Включаем счетчик таймера
-		TIM3 -> CR1 = TIM_CR1_CEN;
-		
-		// Настраиваем значение с которого таймер будет отсчитывать до 0 и вызывать прерывание
-		// Нам нужно отталкиваться от настроенной частоты, чтобы прерывание срабатывало каждую секунду
-		TIM3->PSC = (SystemCoreClock) / 1000 - 1;
-		// Зачем так делать
-		TIM3->ARR = 1000 - 1;
+	// Включаем таймер
+	RCC -> APB1ENR |= RCC_APB1ENR_TIM3EN;
+	// Включаем счетчик таймера
+	TIM3 -> CR1 = TIM_CR1_CEN;
+	
+	// Настраиваем предделитель таймера для того, чтобы удобно задавать интервал прерываний
+	// Прерывание будет вызываться каждую секунду
+	TIM3->PSC = (SystemCoreClock) / 1000 - 1;
+	// Задаем число на котором будут срабатывать прерывания (для удобства)
+	TIM3->ARR = 1000 - 1;
 
-		// Разрешаем прерывания
-		TIM3->DIER |= TIM_DIER_UIE;
-		NVIC_EnableIRQ (TIM3_IRQn);
+	// Разрешаем прерывания
+	TIM3->DIER |= TIM_DIER_UIE;
+	NVIC_EnableIRQ (TIM3_IRQn);
 }
 
 /*----------------------------------------------------------------
@@ -79,115 +71,185 @@ void TIM3_Init () {
  * (для мигания светодиода)
  *----------------------------------------------------------------*/
 void TIM4_Init () {
-		// Включаем таймер
-		RCC -> APB1ENR |= RCC_APB1ENR_TIM4EN;
-		// Включаем счетчик таймера
-		TIM4 -> CR1 = TIM_CR1_CEN;
-		
-		// Настраиваем значение с которого таймер будет отсчитывать до 0 и вызывать прерывание
-		// Нам нужно отталкиваться от настроенной частоты, чтобы прерывание срабатывало каждую секунду
-		TIM4->PSC = (SystemCoreClock / 2) / 1000 - 1;
-		// Зачем так делать
-		TIM4->ARR = 1000 - 1;
+	// Включаем таймер
+	RCC -> APB1ENR |= RCC_APB1ENR_TIM4EN;
+	// Включаем счетчик таймера
+	TIM4 -> CR1 = TIM_CR1_CEN;
+	
+	// Настраиваем предделитель таймера для того, чтобы удобно задавать интервал прерываний
+	// SystemCoreClock / 2 означает что обработчик прерывания будет вызываться каждые пол секунды
+	TIM4->PSC = (SystemCoreClock / 2) / 1000 - 1;
+	// Задаем число на котором будут срабатывать прерывания (для удобства)
+	TIM4->ARR = 1000 - 1;
 
-		// Разрешаем прерывания
-		TIM4->DIER |= TIM_DIER_UIE;
-		NVIC_EnableIRQ (TIM4_IRQn);
+	// Разрешаем прерывания
+	TIM4->DIER |= TIM_DIER_UIE;
+	NVIC_EnableIRQ (TIM4_IRQn);
 }
 
 /*----------------------------------------------------------------
- * enable_pin: Функция для включения пина по его номеру (для порта A) 
+ * enable_pin_input: Функция для включения пина на вход по его 
+										 номеру (порт A)
  *----------------------------------------------------------------*/
-void enable_pin(uint32_t pin_number){
-		if(pin_number < 8ul){
-				GPIOA->CRL &= ~((15ul << 4*pin_number));
-				GPIOA->CRL |= (( 1ul << 4*pin_number));
-		}
-		else{
-				pin_number -= 8ul;
-				GPIOA->CRH &= ~((15ul << 4*pin_number));
-				GPIOA->CRH |= (( 1ul << 4*pin_number));
-		}
+void enable_pin_input(uint32_t pin_number){
+	// Половина пинов порта на регистре CRL, другая половина на CRH
+	if(pin_number < 8ul){
+		// Отчищаем часть регистра для соответствующего пина
+		GPIOA->CRL &= ~((15ul << 4*pin_number));
+		// MODE = 00: input mode
+		GPIOA->CRL |= (( 0ul << 4*pin_number));
+		// INPUT MODE = 10: input with pull up/pull down
+		GPIOA->CRL |= (( 8ul << 4*pin_number));
+		// Включил подтяжку к питанию (pull-up)
+		GPIOA->BSRR |= GPIO_BSRR_BS3;
+	}
+	else{
+		// То же самое для регистра CRH
+		pin_number -= 8ul;
+		GPIOA->CRH &= ~((15ul << 4*pin_number));
+		GPIOA->CRH |= (( 0ul << 4*pin_number));
+		GPIOA->CRH |= (( 8ul << 4*pin_number));
+	}
+}
+
+/*----------------------------------------------------------------
+ * enable_pin_output: Функция для включения пина на выход по его 
+										  номеру (порт A)
+ *----------------------------------------------------------------*/
+void enable_pin_output(uint32_t pin_number){
+	// Половина пинов порта на регистре CRL, другая половина на CRH
+	if(pin_number < 8ul){
+		// Отчищаем часть регистра для соответствующего пина
+		GPIOA->CRL &= ~((15ul << 4*pin_number));
+		// MODE = 01: output mode (10MHz)
+		GPIOA->CRL |= (( 1ul << 4*pin_number));
+		// OUTPUT MODE = 00: output push-pull
+		GPIOA->CRL |= (( 0ul << 4*pin_number));
+	}
+	else{
+		// То же самое для регистра CRH
+		pin_number -= 8ul;
+		GPIOA->CRH &= ~((15ul << 4*pin_number));
+		GPIOA->CRH |= (( 1ul << 4*pin_number));
+	}
 }
 
 /*----------------------------------------------------------------
  * GPIO_Init: Функция для настройки портов ввода-вывода
  *----------------------------------------------------------------*/
 void GPIO_Init (void) {
-		// Разрешаем тактирование порта A
-		RCC->APB2ENR |= (1UL << 2);
-		
-		// Определяем пин PA5 как выходной (для светодиода)
-		// PA5 потому что на имеющейся обучающей плате есть светодиод на данном порту
-		enable_pin(LED_pin);
+	// Разрешаем тактирование порта A
+	RCC->APB2ENR |= (1UL << 2);
+	
+	// Определяем пин PA5 как выходной (для светодиода)
+	// PA5 потому что на имеющейся обучающей плате есть светодиод на данном порту
+	enable_pin_output(LED_pin);
+	enable_pin_input(BUTTON_1_pin);
 }
 
-void switch_pin (uint32_t pin_number) {
-		if(GPIOA->ODR & (1ul << pin_number)){
-			GPIOA->BSRR = 1ul << (pin_number + 16ul);
-		}
-		else{
-			GPIOA->BSRR = 1ul << pin_number;
-		}
+/*----------------------------------------------------------------
+ * Switch_pin: Функция, которая подает инвертированное значение на указанный пин
+							 (если было 0, станет 1 и наоборот)
+ *----------------------------------------------------------------*/
+void Switch_pin (uint32_t pin_number) {
+	if(GPIOA->ODR & (1ul << pin_number)){
+		GPIOA->BSRR = 1ul << (pin_number + 16ul);
+	}
+	else{
+		GPIOA->BSRR = 1ul << pin_number;
+	}
 }
 
 /*----------------------------------------------------------------
  * TIM3_IRQHandler: Обработчик прерываний таймера TIM3
+ * (Вызывается каждую секунду)
  *----------------------------------------------------------------*/
 void TIM3_IRQHandler () {
-		TIM3->SR &= ~TIM_SR_UIF;
-		
-		// Каждую секунду считаем текущее время
-		current_time.seconds++;
-		if(current_time.seconds > 60){
-				current_time.seconds = 0;
-				current_time.minutes++;
-				if(current_time.minutes > 60){
-						current_time.minutes = 0;
-						current_time.hours++;
-						if(current_time.hours > 24){
-								current_time.hours = 0;
-							}
-				}
-		}
-		// Проверяем равно ли оно времени будильника
-		if(current_time.hours == alarm_time.hours && current_time.minutes == alarm_time.minutes){
-				start_alarm_flag = 1;
-		}
+	// Сброс флага прерывания
+	TIM3->SR &= ~TIM_SR_UIF;
+
+	// Прибавляем количество секунд в данных сутках
+	total_seconds++;
+	if(total_seconds == 86400){
+		// Сбрасываем, если начались новые сутки (в сутках 60*60*24=86400 секунд)
+		total_seconds = 0;
+	}
+	// Храним время в структуре для удобства
+	current_time.seconds = total_seconds % 60;
+	current_time.minutes = total_seconds / 60 % 60;
+	current_time.hours = total_seconds / 3600;
+	// В обработчике достаточно много действий, однако я решил не писать их
+	// в main, потому что они должны выполнятся строго друг за другом чтобы не было ошибок.
+	// Если написать их в main, то прерывание TIM3, отработавшее между данными действиями может
+	// привести к неккоректному отображению времени
 }
 
 /*----------------------------------------------------------------
  * TIM4_IRQHandler: обработчик прерываний таймера TIM4
+ * (Вызывается каждые полсекунды)
  *----------------------------------------------------------------*/
 void TIM4_IRQHandler () {
+		// Сброс флага прерывания
 		TIM4->SR &= ~TIM_SR_UIF;
 		
-		// пока что непонятно когда нужно убрать сигнал (автоматически по истечению времени? когда будет нажата кнопка?)
-		if(start_alarm_flag){
-				switch_pin(LED_pin);
+		// Мигаем светодиодом, если будильник звенит
+		if(alarm_flag == 1){
+				Switch_pin(LED_pin);
 		}
 }
 
-
-
+/*----------------------------------------------------------------
+ * Debounce_handler: функция для нивелирования дребезга кнопки
+ *----------------------------------------------------------------*/
+uint8_t Debounce_handler(uint8_t button_state){
+	if(button_state == 0){
+		if(button_count > 0){
+			button_count--; // Уменьшаем пока не достигнем 0
+			return 1;
+		}
+		else{
+			return 0; // Кнопка гарантированно не нажата
+		}
+	}
+	else{
+		if(button_count < debounce_limit){
+			button_count++; // Увеличиваем пока не достигнем установленного лимита
+			return 0;
+		}
+		else{
+			return 1; // Кнопка гарантированно нажата
+		}
+	}
+}
 
 int main (void) {
-		// Настраиваем будильник (пока так)
-		alarm_time.hours = 0;
-		alarm_time.minutes = 1;
-		
-		// Устанавливаем частоту
-		SystemCoreClockConfigure();
-		SystemCoreClockUpdate();
+	// Настраиваем будильник (пока так)
+	alarm_time.hours = 0;
+	alarm_time.minutes = 1;
+	
+	// Устанавливаем частоту
+	SystemCoreClockConfigure();
+	SystemCoreClockUpdate();
 
-		// Настраиваем порты ввода вывода
-		GPIO_Init();
-	
-		// Настраиваем таймеры
-		TIM3_Init();
-		TIM4_Init();
-	
-		while (1) {
-			
+	// Настраиваем порты ввода вывода
+	GPIO_Init();
+
+	// Настраиваем таймеры
+	TIM3_Init();
+	TIM4_Init();
+
+	while (1) {
+		button_state = READ_BIT(GPIOA->IDR, 1 << BUTTON_1_pin);
+		if(Debounce_handler(button_state)){
+			alarm_flag = 1;
 		}
+		else{
+			alarm_flag = 0;
+		}
+		
+		// Проверяем равно ли текущее время и время будильника
+		if(current_time.hours == alarm_time.hours && current_time.minutes == alarm_time.minutes){
+				
+		}
+	}
 }
